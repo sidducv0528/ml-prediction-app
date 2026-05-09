@@ -16,7 +16,7 @@
 
 <br/>
 
-![App Preview](https://opengraph.githubassets.com/704dbe096282514337ded746b9b732595df1a5dbd7a40bf9197ea2a2555fed08/sidducv0528/ml-prediction-app)
+
 
 </div>
 
