@@ -6,7 +6,7 @@
 ![ML Models](https://img.shields.io/badge/Models-4%20ML%20Algorithms-1A3C6B?style=flat-square)
 ![No Backend](https://img.shields.io/badge/Backend-None%20Required-0F6E56?style=flat-square)
 
-## 🌐 Live Demo
+## 🌐    Live Demo
 **[👉 Click here to use the app](https://sidducv0528.github.io/ml-prediction-app)**
 
 ## 🎯 Models Inside
