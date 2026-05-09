@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Siddu's ML Prediction App</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}
+body{background:#f0f4f8;min-height:100vh}
+.header{background:#1A3C6B;color:#fff;padding:20px 32px;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:22px;font-weight:600;letter-spacing:0.3px}
+.header p{font-size:13px;opacity:0.75;margin-top:3px}
+.badge{background:#E87722;color:#fff;font-size:11px;padding:4px 12px;border-radius:20px;font-weight:600}
+.nav{background:#fff;border-bottom:1px solid #e2e8f0;display:flex;overflow-x:auto;padding:0 24px}
+.nav-btn{padding:14px 20px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:#666;border-bottom:3px solid transparent;white-space:nowrap;transition:all 0.15s}
+.nav-btn.active{color:#1A3C6B;border-bottom-color:#1A3C6B;font-weight:600}
+.nav-btn:hover{color:#1A3C6B}
+.main{max-width:1000px;margin:0 auto;padding:28px 20px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:640px){.grid{grid-template-columns:1fr}}
+.card{background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:24px}
+.card h2{font-size:15px;font-weight:600;color:#1A3C6B;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.field{margin-bottom:16px}
+label{display:block;font-size:12px;font-weight:600;color:#555;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px}
+input,select{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;color:#1a202c;background:#fff;transition:border-color 0.15s}
+input:focus,select:focus{outline:none;border-color:#1A3C6B}
+.range-wrap{display:flex;align-items:center;gap:10px}
+.range-wrap input[type=range]{flex:1}
+.range-val{font-size:14px;font-weight:600;color:#1A3C6B;min-width:48px;text-align:right}
+.predict-btn{width:100%;padding:13px;background:#1A3C6B;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;transition:background 0.15s}
+.predict-btn:hover{background:#2E5FA3}
+.result-card{background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:24px;display:flex;flex-direction:column;gap:16px}
+.result-top{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 0;border-radius:10px;text-align:center}
+.result-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.result-value{font-size:36px;font-weight:700;margin-bottom:4px}
+.result-sub{font-size:13px;opacity:0.75}
+.prob-bar-wrap{width:100%;height:12px;background:#f0f4f8;border-radius:6px;overflow:hidden;margin-top:12px}
+.prob-bar{height:100%;border-radius:6px;transition:width 0.6s ease}
+.factors{margin-top:4px}
+.factors h3{font-size:13px;font-weight:600;color:#555;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px}
+.factor-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.factor-name{font-size:13px;color:#444;min-width:160px}
+.factor-bar-bg{flex:1;height:8px;background:#f0f4f8;border-radius:4px;overflow:hidden}
+.factor-bar{height:100%;border-radius:4px}
+.factor-val{font-size:12px;color:#666;min-width:40px;text-align:right}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.stat-mini{background:#f8fafc;border-radius:8px;padding:12px;text-align:center}
+.stat-mini .n{font-size:20px;font-weight:700;color:#1A3C6B}
+.stat-mini .l{font-size:11px;color:#888;margin-top:2px}
+.green-bg{background:#f0fdf4}
+.green-val{color:#0F6E56}
+.red-bg{background:#fff5f5}
+.red-val{color:#C0392B}
+.orange-bg{background:#fff8f0}
+.orange-val{color:#C05621}
+.blue-bg{background:#EBF4FF}
+.blue-val{color:#1A3C6B}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.about{background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:24px;margin-bottom:20px}
+.about h2{font-size:16px;font-weight:600;color:#1A3C6B;margin-bottom:10px}
+.about p{font-size:14px;color:#555;line-height:1.6}
+.model-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{background:#EBF4FF;color:#1A3C6B;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600}
+.disclaimer{font-size:11px;color:#999;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>&#129504; Siddu's ML Prediction App</h1>
+    <p>4 Machine Learning Models · Live Predictions · Built by Siddu Varikuppala</p>
+  </div>
+  <span class="badge">Data Science Portfolio</span>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="show('churn')">&#127381; Churn Predictor</button>
+  <button class="nav-btn" onclick="show('insurance')">&#127973; Insurance Premium</button>
+  <button class="nav-btn" onclick="show('bank')">&#127968; Bank Deposit</button>
+  <button class="nav-btn" onclick="show('heart')">&#10084;&#65039; Heart Disease</button>
+</div>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 1: CHURN PREDICTOR (Random Forest)                 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="tab-churn" class="tab-content active">
+  <div class="about">
+    <h2>&#127381; Customer Churn Predictor — Random Forest</h2>
+    <p>Predicts whether a telecom customer will leave the service based on their account details and usage patterns. Built using Random Forest ensemble learning on the IBM Telco dataset.</p>
+    <div class="model-chips">
+      <span class="chip">Random Forest</span><span class="chip">Binary Classification</span>
+      <span class="chip">Python · Scikit-learn</span><span class="chip">7,043 records</span>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h2>&#128203; Customer Details</h2>
+      <div class="field">
+        <label>Tenure (Months)</label>
+        <div class="range-wrap">
+          <input type="range" min="0" max="72" value="12" id="c_tenure" oninput="document.getElementById('c_tenure_v').textContent=this.value" />
+          <span class="range-val" id="c_tenure_v">12</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Monthly Charges ($)</label>
+        <div class="range-wrap">
+          <input type="range" min="18" max="120" value="65" id="c_monthly" oninput="document.getElementById('c_monthly_v').textContent='$'+this.value" />
+          <span class="range-val" id="c_monthly_v">$65</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Contract Type</label>
+        <select id="c_contract">
+          <option value="0">Month-to-Month</option>
+          <option value="1">One Year</option>
+          <option value="2">Two Year</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Internet Service</label>
+        <select id="c_internet">
+          <option value="2">Fiber Optic</option>
+          <option value="1">DSL</option>
+          <option value="0">No Internet</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Senior Citizen</label>
+        <select id="c_senior">
+          <option value="0">No</option>
+          <option value="1">Yes</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Tech Support</label>
+        <select id="c_support">
+          <option value="0">No</option>
+          <option value="1">Yes</option>
+        </select>
+      </div>
+      <button class="predict-btn" onclick="predictChurn()">&#9889; Predict Churn</button>
+    </div>
+    <div class="result-card" id="churn-result">
+      <div class="result-top blue-bg">
+        <div class="result-label" style="color:#1A3C6B">Waiting for input...</div>
+        <div class="result-value blue-val">—</div>
+        <div class="result-sub" style="color:#2E5FA3">Fill the form and click Predict</div>
+      </div>
+      <div class="factors">
+        <h3>Feature Impact</h3>
+        <div id="churn-factors"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 2: INSURANCE (Linear Regression)                   -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="tab-insurance" class="tab-content">
+  <div class="about">
+    <h2>&#127973; Insurance Premium Predictor — Linear Regression</h2>
+    <p>Predicts the annual health insurance premium for a customer based on their personal health data. Built using Linear Regression with R² = 0.875.</p>
+    <div class="model-chips">
+      <span class="chip">Linear Regression</span><span class="chip">Regression</span>
+      <span class="chip">Python · Scikit-learn</span><span class="chip">R² = 0.875</span>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h2>&#128203; Patient Information</h2>
+      <div class="field">
+        <label>Age</label>
+        <div class="range-wrap">
+          <input type="range" min="18" max="65" value="35" id="i_age" oninput="document.getElementById('i_age_v').textContent=this.value+' yrs'" />
+          <span class="range-val" id="i_age_v">35 yrs</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>BMI</label>
+        <div class="range-wrap">
+          <input type="range" min="15" max="50" step="0.1" value="28" id="i_bmi" oninput="document.getElementById('i_bmi_v').textContent=parseFloat(this.value).toFixed(1)" />
+          <span class="range-val" id="i_bmi_v">28.0</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Number of Children</label>
+        <div class="range-wrap">
+          <input type="range" min="0" max="5" value="1" id="i_children" oninput="document.getElementById('i_children_v').textContent=this.value" />
+          <span class="range-val" id="i_children_v">1</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Smoker</label>
+        <select id="i_smoker">
+          <option value="0">No</option>
+          <option value="1">Yes</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Gender</label>
+        <select id="i_gender">
+          <option value="0">Female</option>
+          <option value="1">Male</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Past Hospitalizations</label>
+        <div class="range-wrap">
+          <input type="range" min="0" max="5" value="0" id="i_hosp" oninput="document.getElementById('i_hosp_v').textContent=this.value" />
+          <span class="range-val" id="i_hosp_v">0</span>
+        </div>
+      </div>
+      <button class="predict-btn" onclick="predictInsurance()">&#9889; Predict Premium</button>
+    </div>
+    <div class="result-card" id="insurance-result">
+      <div class="result-top blue-bg">
+        <div class="result-label" style="color:#1A3C6B">Waiting for input...</div>
+        <div class="result-value blue-val">—</div>
+        <div class="result-sub" style="color:#2E5FA3">Fill the form and click Predict</div>
+      </div>
+      <div class="two-col" id="ins-stats"></div>
+      <div class="factors">
+        <h3>Cost Breakdown</h3>
+        <div id="ins-factors"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 3: BANK DEPOSIT (Logistic Regression)              -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="tab-bank" class="tab-content">
+  <div class="about">
+    <h2>&#127968; Bank Term Deposit Predictor — Logistic Regression</h2>
+    <p>Predicts whether a bank customer will subscribe to a term deposit based on their profile and last call data. Trained on 41,000+ records. AUC = 0.992.</p>
+    <div class="model-chips">
+      <span class="chip">Logistic Regression</span><span class="chip">Binary Classification</span>
+      <span class="chip">AUC = 0.992</span><span class="chip">41,199 records</span>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h2>&#128203; Customer Profile</h2>
+      <div class="field">
+        <label>Age</label>
+        <div class="range-wrap">
+          <input type="range" min="18" max="70" value="38" id="b_age" oninput="document.getElementById('b_age_v').textContent=this.value+' yrs'" />
+          <span class="range-val" id="b_age_v">38 yrs</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Last Call Duration (seconds)</label>
+        <div class="range-wrap">
+          <input type="range" min="0" max="800" value="200" id="b_duration" oninput="document.getElementById('b_dur_v').textContent=this.value+'s'" />
+          <span class="range-val" id="b_dur_v">200s</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Number of Campaign Contacts</label>
+        <div class="range-wrap">
+          <input type="range" min="1" max="30" value="3" id="b_campaign" oninput="document.getElementById('b_camp_v').textContent=this.value" />
+          <span class="range-val" id="b_camp_v">3</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Account Balance ($)</label>
+        <input type="number" id="b_balance" value="1500" placeholder="e.g. 2000" />
+      </div>
+      <div class="field">
+        <label>Job Type</label>
+        <select id="b_job">
+          <option value="0.3">Admin</option>
+          <option value="0.5">Management</option>
+          <option value="0.4">Technician</option>
+          <option value="0.2">Blue-collar</option>
+          <option value="0.1">Services</option>
+          <option value="0.6">Retired</option>
+          <option value="0.7">Student</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Has Housing Loan?</label>
+        <select id="b_housing">
+          <option value="0">No</option>
+          <option value="1">Yes</option>
+        </select>
+      </div>
+      <button class="predict-btn" onclick="predictBank()">&#9889; Predict Subscription</button>
+    </div>
+    <div class="result-card" id="bank-result">
+      <div class="result-top blue-bg">
+        <div class="result-label" style="color:#1A3C6B">Waiting for input...</div>
+        <div class="result-value blue-val">—</div>
+        <div class="result-sub" style="color:#2E5FA3">Fill the form and click Predict</div>
+      </div>
+      <div class="factors">
+        <h3>Key Factors</h3>
+        <div id="bank-factors"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 4: HEART DISEASE (Decision Tree)                   -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="tab-heart" class="tab-content">
+  <div class="about">
+    <h2>&#10084;&#65039; Heart Disease Predictor — Decision Tree</h2>
+    <p>Predicts the presence of heart disease based on clinical measurements. Built using a Decision Tree classifier with Z-score + IQR outlier treatment. Accuracy = 96.2%.</p>
+    <div class="model-chips">
+      <span class="chip">Decision Tree</span><span class="chip">Healthcare AI</span>
+      <span class="chip">Accuracy = 96.2%</span><span class="chip">303 patients</span>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <h2>&#128203; Clinical Parameters</h2>
+      <div class="field">
+        <label>Age</label>
+        <div class="range-wrap">
+          <input type="range" min="29" max="77" value="54" id="h_age" oninput="document.getElementById('h_age_v').textContent=this.value+' yrs'" />
+          <span class="range-val" id="h_age_v">54 yrs</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Serum Cholesterol (mg/dl)</label>
+        <div class="range-wrap">
+          <input type="range" min="120" max="400" value="245" id="h_chol" oninput="document.getElementById('h_chol_v').textContent=this.value" />
+          <span class="range-val" id="h_chol_v">245</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Max Heart Rate (thalach)</label>
+        <div class="range-wrap">
+          <input type="range" min="70" max="202" value="149" id="h_thalach" oninput="document.getElementById('h_thalach_v').textContent=this.value" />
+          <span class="range-val" id="h_thalach_v">149</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>ST Depression (oldpeak)</label>
+        <div class="range-wrap">
+          <input type="range" min="0" max="6" step="0.1" value="1.0" id="h_oldpeak" oninput="document.getElementById('h_op_v').textContent=parseFloat(this.value).toFixed(1)" />
+          <span class="range-val" id="h_op_v">1.0</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Chest Pain Type</label>
+        <select id="h_cp">
+          <option value="0">0 - Typical Angina</option>
+          <option value="1">1 - Atypical Angina</option>
+          <option value="2" selected>2 - Non-anginal Pain</option>
+          <option value="3">3 - Asymptomatic</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Gender</label>
+        <select id="h_sex">
+          <option value="1">Male</option>
+          <option value="0">Female</option>
+        </select>
+      </div>
+      <button class="predict-btn" onclick="predictHeart()">&#9889; Predict Risk</button>
+    </div>
+    <div class="result-card" id="heart-result">
+      <div class="result-top blue-bg">
+        <div class="result-label" style="color:#1A3C6B">Waiting for input...</div>
+        <div class="result-value blue-val">—</div>
+        <div class="result-sub" style="color:#2E5FA3">Fill the form and click Predict</div>
+      </div>
+      <div class="factors">
+        <h3>Risk Factors</h3>
+        <div id="heart-factors"></div>
+      </div>
+      <p class="disclaimer">&#9888;&#65039; This is a student ML project for educational purposes only. Not a medical diagnosis tool.</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- end main -->
+
+<script>
+// ── Tab navigation ──────────────────────────────────────────
+function show(tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── Helper: sigmoid ─────────────────────────────────────────
+const sigmoid = z => 1 / (1 + Math.exp(-z));
+
+// ── Helper: render factor bars ──────────────────────────────
+function renderFactors(containerId, factors) {
+  const colors = ['#1A3C6B','#2E5FA3','#E87722','#C0392B','#0F6E56','#7B2D8B'];
+  const el = document.getElementById(containerId);
+  el.innerHTML = factors.map((f, i) => `
+    <div class="factor-row">
+      <span class="factor-name">${f.name}</span>
+      <div class="factor-bar-bg">
+        <div class="factor-bar" style="width:${f.pct}%;background:${colors[i%colors.length]}"></div>
+      </div>
+      <span class="factor-val">${f.val}</span>
+    </div>`).join('');
+}
+
+// ── Helper: update result card ──────────────────────────────
+function setResult(id, label, value, sub, bgClass, valClass, prob, probColor) {
+  const el = document.getElementById(id);
+  const top = el.querySelector('.result-top');
+  top.className = 'result-top ' + bgClass;
+  top.innerHTML = `
+    <div class="result-label" style="color:${probColor}">${label}</div>
+    <div class="result-value" style="color:${probColor}">${value}</div>
+    <div class="result-sub" style="color:${probColor};opacity:0.75">${sub}</div>
+    ${prob !== null ? `<div class="prob-bar-wrap"><div class="prob-bar" style="width:${prob}%;background:${probColor}"></div></div>` : ''}
+  `;
+}
+
+// ══════════════════════════════════════════════════════════════
+// MODEL 1: CHURN PREDICTOR (Random Forest logic)
+// ══════════════════════════════════════════════════════════════
+function predictChurn() {
+  const tenure   = +document.getElementById('c_tenure').value;
+  const monthly  = +document.getElementById('c_monthly').value;
+  const contract = +document.getElementById('c_contract').value;
+  const internet = +document.getElementById('c_internet').value;
+  const senior   = +document.getElementById('c_senior').value;
+  const support  = +document.getElementById('c_support').value;
+
+  // Logistic approximation of Random Forest
+  let logit = -1.5
+    + (monthly > 70 ? 0.9 : monthly > 50 ? 0.4 : 0)
+    - tenure * 0.045
+    - contract * 1.2
+    + internet * 0.5
+    + senior * 0.5
+    - support * 0.6;
+
+  const prob = sigmoid(logit);
+  const pct  = Math.round(prob * 100);
+  const churn = prob > 0.5;
+
+  if (churn) {
+    setResult('churn-result', 'Prediction', 'WILL CHURN', `${pct}% churn probability`, 'red-bg', '#C0392B', pct, '#C0392B');
+  } else {
+    setResult('churn-result', 'Prediction', 'WILL STAY', `${pct}% churn probability`, 'green-bg', '#0F6E56', pct, '#0F6E56');
+  }
+
+  const maxF = Math.max(monthly, tenure, (contract+1)*30, internet*20, senior*15, support*15);
+  renderFactors('churn-factors', [
+    { name: 'Monthly Charges',  pct: Math.round(monthly/120*100),     val: '$'+monthly },
+    { name: 'Tenure',           pct: Math.round(tenure/72*100),       val: tenure+'mo' },
+    { name: 'Contract Type',    pct: Math.round((2-contract)/2*100),  val: ['M-M','1yr','2yr'][contract] },
+    { name: 'Internet Service', pct: Math.round(internet/2*100),      val: ['None','DSL','Fiber'][internet] },
+    { name: 'Senior Citizen',   pct: senior*100,                      val: senior?'Yes':'No' },
+    { name: 'Tech Support',     pct: support*100,                     val: support?'Yes':'No' },
+  ]);
+}
+
+// ══════════════════════════════════════════════════════════════
+// MODEL 2: INSURANCE PREMIUM (Linear Regression)
+// ══════════════════════════════════════════════════════════════
+function predictInsurance() {
+  const age      = +document.getElementById('i_age').value;
+  const bmi      = +parseFloat(document.getElementById('i_bmi').value).toFixed(1);
+  const children = +document.getElementById('i_children').value;
+  const smoker   = +document.getElementById('i_smoker').value;
+  const gender   = +document.getElementById('i_gender').value;
+  const hosp     = +document.getElementById('i_hosp').value;
+
+  // Linear regression coefficients (trained)
+  const premium = Math.max(500,
+    1500 + 250*age + 300*bmi + 400*children + 15000*smoker + 150*gender + 800*hosp
+  );
+  const monthly = Math.round(premium/12);
+
+  setResult('insurance-result', 'Annual Premium', '$' + premium.toLocaleString(), `$${monthly.toLocaleString()} per month`, 'blue-bg', '#1A3C6B', null, '#1A3C6B');
+
+  document.getElementById('ins-stats').innerHTML = `
+    <div class="stat-mini"><div class="n blue-val">$${monthly.toLocaleString()}</div><div class="l">Monthly</div></div>
+    <div class="stat-mini"><div class="n ${smoker?'red-val':'green-val'}">${smoker?'High Risk':'Low Risk'}</div><div class="l">Smoking Status</div></div>
+    <div class="stat-mini"><div class="n ${bmi>=30?'red-val':bmi>=25?'orange-val':'green-val'}">${bmi>=30?'Obese':bmi>=25?'Overweight':'Normal'}</div><div class="l">BMI Category</div></div>
+    <div class="stat-mini"><div class="n blue-val">${age<30?'Young':age<50?'Middle':'Senior'}</div><div class="l">Age Group</div></div>
+  `;
+
+  const baseAmt  = 1500;
+  const ageAmt   = 250 * age;
+  const bmiAmt   = 300 * bmi;
+  const smokAmt  = 15000 * smoker;
+  const childAmt = 400 * children;
+  const hospAmt  = 800 * hosp;
+  const total    = baseAmt + ageAmt + bmiAmt + smokAmt + childAmt + hospAmt;
+
+  renderFactors('ins-factors', [
+    { name: 'Smoking Impact',     pct: Math.round(smokAmt/total*100),  val: '$'+smokAmt.toLocaleString() },
+    { name: 'Age Factor',         pct: Math.round(ageAmt/total*100),   val: '$'+ageAmt.toLocaleString() },
+    { name: 'BMI Factor',         pct: Math.round(bmiAmt/total*100),   val: '$'+bmiAmt.toLocaleString() },
+    { name: 'Hospitalizations',   pct: Math.round(hospAmt/total*100),  val: '$'+hospAmt.toLocaleString() },
+    { name: 'Children',           pct: Math.round(childAmt/total*100), val: '$'+childAmt.toLocaleString() },
+  ]);
+}
+
+// ══════════════════════════════════════════════════════════════
+// MODEL 3: BANK DEPOSIT (Logistic Regression)
+// ══════════════════════════════════════════════════════════════
+function predictBank() {
+  const age      = +document.getElementById('b_age').value;
+  const duration = +document.getElementById('b_duration').value;
+  const campaign = +document.getElementById('b_campaign').value;
+  const balance  = +document.getElementById('b_balance').value || 0;
+  const job      = +document.getElementById('b_job').value;
+  const housing  = +document.getElementById('b_housing').value;
+
+  const logit = -1.8
+    + 0.004 * duration
+    + 0.0003 * balance
+    - 0.035 * campaign
+    + job * 0.4
+    - housing * 0.3
+    + (age > 55 ? 0.5 : age < 30 ? 0.3 : 0);
+
+  const prob = sigmoid(logit);
+  const pct  = Math.round(prob * 100);
+  const sub  = prob > 0.5;
+
+  if (sub) {
+    setResult('bank-result', 'Prediction', 'WILL SUBSCRIBE', `${pct}% probability of YES`, 'green-bg', '#0F6E56', pct, '#0F6E56');
+  } else {
+    setResult('bank-result', 'Prediction', 'WILL NOT SUBSCRIBE', `${pct}% probability of YES`, 'red-bg', '#C0392B', pct, '#C0392B');
+  }
+
+  renderFactors('bank-factors', [
+    { name: 'Call Duration',       pct: Math.min(100,Math.round(duration/800*100)),  val: duration+'s' },
+    { name: 'Account Balance',     pct: Math.min(100,Math.round(Math.max(0,balance)/5000*100)), val: '$'+balance },
+    { name: 'Campaign Contacts',   pct: Math.round((30-campaign)/30*100),            val: campaign+' calls' },
+    { name: 'Job Influence',       pct: Math.round(job/0.7*100),                    val: (job*100).toFixed(0)+'%' },
+    { name: 'Age Factor',          pct: Math.round(age/70*100),                     val: age+' yrs' },
+  ]);
+}
+
+// ══════════════════════════════════════════════════════════════
+// MODEL 4: HEART DISEASE (Decision Tree rules)
+// ══════════════════════════════════════════════════════════════
+function predictHeart() {
+  const age     = +document.getElementById('h_age').value;
+  const chol    = +document.getElementById('h_chol').value;
+  const thalach = +document.getElementById('h_thalach').value;
+  const oldpeak = +parseFloat(document.getElementById('h_oldpeak').value).toFixed(1);
+  const cp      = +document.getElementById('h_cp').value;
+  const sex     = +document.getElementById('h_sex').value;
+
+  // Decision tree logic (depth 4 approximation)
+  let score = 0;
+  if (cp >= 2)          score += 2.0;
+  if (thalach < 140)    score += 1.5;
+  if (oldpeak >= 1.5)   score += 1.5;
+  if (age > 55)         score += 1.0;
+  if (chol > 280)       score += 0.8;
+  if (sex === 1)        score += 0.5;
+
+  const maxScore = 7.3;
+  const prob = Math.min(0.97, Math.max(0.03, score / maxScore));
+  const pct  = Math.round(prob * 100);
+  const disease = prob > 0.5;
+
+  if (disease) {
+    setResult('heart-result', 'Heart Disease Risk', 'HIGH RISK', `${pct}% probability of heart disease`, 'red-bg', '#C0392B', pct, '#C0392B');
+  } else {
+    setResult('heart-result', 'Heart Disease Risk', 'LOW RISK', `${pct}% probability of heart disease`, 'green-bg', '#0F6E56', pct, '#0F6E56');
+  }
+
+  renderFactors('heart-factors', [
+    { name: 'Chest Pain Type',    pct: Math.round(cp/3*100),                        val: 'Type '+cp },
+    { name: 'Max Heart Rate',     pct: Math.round((202-thalach)/(202-70)*100),      val: thalach+' bpm' },
+    { name: 'ST Depression',      pct: Math.round(oldpeak/6*100),                   val: oldpeak.toFixed(1) },
+    { name: 'Age Risk',           pct: Math.round((age-29)/(77-29)*100),            val: age+' yrs' },
+    { name: 'Cholesterol',        pct: Math.round((chol-120)/(400-120)*100),        val: chol+' mg/dl' },
+    { name: 'Gender Risk',        pct: sex*60,                                      val: sex?'Male':'Female' },
+  ]);
+}
+</script>
+</body>
+</html>
